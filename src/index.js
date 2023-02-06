@@ -4,7 +4,14 @@ import morgan from 'morgan'
 import cors from 'cors'
 import swaggerUI from 'swagger-ui-express'
 import YAML from 'yamljs'
-import { swaggerOptions } from './config/index.js'
+import { connectDB, swaggerOptions } from './config/index.js'
+import { Paths } from './common/types/index.js'
+import {
+  authRoutes,
+  permissionsRoutes,
+  usersRoutes,
+} from './api/v1/routes/index.js'
+import { languages } from './middlewares/validations/index.js'
 
 dotenv.config()
 const PORT = process.env.PORT ?? 3000
@@ -30,20 +37,25 @@ app.use(
     ].join(' ')
   }),
 )
+app.use('/', languages)
 
 // API
 app.use(
   `/api-docs`,
   swaggerUI.serve,
-  swaggerUI.setup(undefined, { explorer: true, swaggerOptions }),
+  swaggerUI.setup(undefined, swaggerOptions),
 )
 app.get('/', (_req, res) => {
   const html = `<h1><a href="${SERVER_URL_NAME}/api-docs">Swagger api documentation</a></h1>`
   return res.status(200).send(html)
 })
 app.get('/api/v1/docs/swagger.yaml', (_req, res) => res.json(swaggerDocumentV1))
+app.use('/api/v1', authRoutes)
+app.use(`/api/v1/${Paths.users}`, usersRoutes)
+app.use(`/api/v1/${Paths.permissions}`, permissionsRoutes)
 
 const bootstrap = async () => {
+  await connectDB()
   app.listen(PORT, () => {
     console.log(`Server running on ${SERVER_URL_NAME}`)
   })

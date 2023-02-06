@@ -1,4 +1,6 @@
-import en from './en.json'
-import es from './es.json'
+import { createRequire } from 'node:module'
+const require = createRequire(import.meta.url)
+const en = require('./en.json')
+const es = require('./es.json')
 
 export default { en, es }
